@@ -4,20 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GamePanel extends JPanel implements Runnable {
-    public static final int WIDTH = 1280;
-    public static final int HEIGHT = 720;
     public int FPS = 60;
-    Thread gameThread;
-
     public GamePanel() {
-        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        this.setBackground(Color.BLACK);
+        this.setPreferredSize(new Dimension((int)Toolkit.getDefaultToolkit().getScreenSize().getWidth(),
+                (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth()));
+        this.setBackground(Color.CYAN);
         this.setLayout(null);
-    }
-
-    public void gameStart() {
-        gameThread = new Thread(this);
-        gameThread.start();
     }
 
     @Override
@@ -45,7 +37,13 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
+        paintBasicWindowLook(graphics);
+        int rowHeight = 30, rowWidth = 25;
+        for (int i = 1; i < 11; i++) {
+            graphics.drawLine(100,100+(rowHeight*i),1100,100+(rowHeight*i));
+        }
+        for (int i = 0; i < 41; i++) {
+            graphics.drawLine(100+(rowWidth*i),130,100+(rowWidth*i),400);
+        }
     }
-
-
 }
