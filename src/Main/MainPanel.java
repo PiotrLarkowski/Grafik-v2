@@ -67,8 +67,24 @@ public class MainPanel extends JPanel implements Runnable {
         Graphics2D g2 = (Graphics2D) g;
 
         g2.setColor(Color.BLACK);
+
+        g2.setFont(new Font("Tahoma", Font.BOLD, 30));
+        g2.drawString("ESC",(int) (WIDTH * 0.93),(int)(WIDTH * 0.05));
+        g2.setFont(new Font("Tahoma", Font.BOLD, 20));
+        g2.drawString("Wyjście",(int) (WIDTH * 0.925),(int)(WIDTH * 0.07));
+        g2.setStroke(new BasicStroke(5));
+        drawRectPercent(g2,0.92,0.05,0.05,0.1);
+        g2.setStroke(new BasicStroke(1));
+
         printHints(g2);
 
+        drawButtons(g2);
+
+        String month = "Styczen";
+        drawMonthGrid(g2, month);
+    }
+
+    private static void drawButtons(Graphics2D g2) {
         g2.setFont(new Font("Tahoma", Font.BOLD, 20));
         g2.drawString("Nowy grafik",(int) (WIDTH * 0.03),(int) (HEIGHT * 0.05));
         drawRectPercent(g2,0.01,0.02,0.1,0.05);
@@ -76,9 +92,6 @@ public class MainPanel extends JPanel implements Runnable {
         drawRectPercent(g2,0.01,0.08,0.1,0.05);
         g2.drawString("Przycik 3",(int) (WIDTH * 0.03),(int) (HEIGHT * 0.17));
         drawRectPercent(g2,0.01,0.14,0.1,0.05);
-
-        String month = "Styczen";
-        drawMonthGrid(g2, month);
     }
 
     private void printHints(Graphics2D g2) {
