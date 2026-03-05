@@ -3,13 +3,29 @@ package Main;
 import javax.swing.*;
 import java.awt.*;
 
-public class GamePanel extends JPanel implements Runnable {
+public class MainPanel extends JPanel implements Runnable {
+    public static int appPhase = 0;
+    static boolean findNumberOfDays = false;
     public int FPS = 60;
-    public GamePanel() {
-        this.setPreferredSize(new Dimension((int)Toolkit.getDefaultToolkit().getScreenSize().getWidth(),
-                (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth()));
-        this.setBackground(Color.CYAN);
+    static int WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+    static int HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+    KeyHandler keyH = new KeyHandler();
+    MyMouseListener mouseL = new MyMouseListener();
+    Thread gameThread;
+
+    public MainPanel() {
+        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        this.setBackground(new Color(34, 139, 80));
+        this.setDoubleBuffered(true);
+        this.addMouseListener(mouseL);
+        this.addKeyListener(keyH);
+        this.setFocusable(true);
         this.setLayout(null);
+    }
+
+    public void startGameThread() {
+        gameThread = new Thread(this);
+        gameThread.start();
     }
 
     @Override
@@ -18,15 +34,26 @@ public class GamePanel extends JPanel implements Runnable {
         double delta = 0;
         long lastTime = System.nanoTime();
         long currentTime;
+        long timer = 0;
+        long drawCount = 0;
 
         while (gameThread != null) {
             currentTime = System.nanoTime();
+
             delta += (currentTime - lastTime) / drawInterval;
+            timer += (currentTime - lastTime);
             lastTime = currentTime;
+
             if (delta >= 1) {
                 update();
                 repaint();
                 delta--;
+                drawCount++;
+            }
+            if (timer >= 1000000000) {
+//                System.out.println("FPS: " + drawCount);
+                drawCount = 0;
+                timer = 0;
             }
         }
     }
@@ -35,15 +62,95 @@ public class GamePanel extends JPanel implements Runnable {
 
     }
 
-    public void paintComponent(Graphics graphics) {
-        super.paintComponent(graphics);
-        paintBasicWindowLook(graphics);
-        int rowHeight = 30, rowWidth = 25;
-        for (int i = 1; i < 11; i++) {
-            graphics.drawLine(100,100+(rowHeight*i),1100,100+(rowHeight*i));
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
+
+        g2.setColor(Color.BLACK);
+        printHints(g2);
+
+        g2.setFont(new Font("Tahoma", Font.BOLD, 20));
+        g2.drawString("Nowy grafik",(int) (WIDTH * 0.03),(int) (HEIGHT * 0.05));
+        drawRectPercent(g2,0.01,0.02,0.1,0.05);
+        g2.drawString("Przycik 2",(int) (WIDTH * 0.03),(int) (HEIGHT * 0.11));
+        drawRectPercent(g2,0.01,0.08,0.1,0.05);
+        g2.drawString("Przycik 3",(int) (WIDTH * 0.03),(int) (HEIGHT * 0.17));
+        drawRectPercent(g2,0.01,0.14,0.1,0.05);
+
+        String month = "Styczen";
+        drawMonthGrid(g2, month);
+    }
+
+    private void printHints(Graphics2D g2) {
+        g2.setFont(new Font("Tahoma", Font.BOLD, 24));
+
+        g2.drawString("PODPOWIEDŹ",(int) (WIDTH * 0.72),(int)(WIDTH * 0.05));
+        g2.drawRoundRect((int) (WIDTH * 0.6), (int)(HEIGHT * 0.05), (int)(WIDTH * 0.3), (int)(HEIGHT * 0.2), 25, 25);
+        g2.setFont(new Font("Tahoma", Font.BOLD, 14));
+
+        String textHint = "Kliknij na kwadrat przedstawiający dany dzień dla danej osoby by ustawić \n\n " +
+                "że ma to być dzień W - Wolny, D/W - Dniówka lub Wolny, \n\n" +
+                " N/W - Nocka lub Wolny, D - Dniówka, N - Nocka, U - Urlop";
+        drawStringMultiline(g2, textHint,(int) (WIDTH * 0.62),(int)(WIDTH * 0.07));
+    }
+
+    void drawStringMultiline(Graphics2D g2, String text, int x, int y) {
+        FontMetrics fm = g2.getFontMetrics();
+        int lineHeight = fm.getHeight();
+
+        for(String line : text.split("\n")) {
+            g2.drawString(line, x, y);
+            y += lineHeight;
         }
-        for (int i = 0; i < 41; i++) {
-            graphics.drawLine(100+(rowWidth*i),130,100+(rowWidth*i),400);
+    }
+
+    private static void drawMonthGrid(Graphics2D g2, String month) {
+        g2.setFont(new Font("Tahoma", Font.BOLD, 14));
+        int numberOfDaysInMonth = setNumberOfDays(month);
+
+        for (int i = 0; i < numberOfDaysInMonth; i++) {
+            g2.drawString(String.valueOf(i+1),(int)((WIDTH * 0.1)+15)+(int)((WIDTH * 0.02)*i),(int) (HEIGHT * 0.5)-5);
+            drawRectPercent(g2, 0.1+(0.02*i), 0.50, 0.02, 0.04);
+            for (int j = 0; j < 6; j++) {
+                drawRectPercent(g2, 0.1+(0.02*i), 0.50+(0.04*j), 0.02, 0.04);
+            }
         }
+    }
+
+    static void drawRectPercent(Graphics2D g2, double x, double y, double wigth, double height) {
+        int px = (int) (WIDTH * x);
+        int py = (int) (HEIGHT * y);
+        int pw = (int) (WIDTH * wigth);
+        int ph = (int) (HEIGHT * height);
+
+        g2.drawRect(px, py, pw, ph);
+    }
+
+    private static int setNumberOfDays(String month) {
+        int numberOfDays = 0;
+        findNumberOfDays = false;
+        String[] monthWith31Days = {"Styczen", "Marzec", "Maj", "Lipiec", "Sierpien", "Październik", "Grudzien"};
+        String[] monthWith30Days = {"Kwiecien", "Czerwiec", "Wrzesien", "Listopad"};
+        for (int i = 0; i < monthWith31Days.length; i++) {
+            if (month.equals(monthWith31Days[i])) {
+                numberOfDays = 31;
+                findNumberOfDays = true;
+                break;
+            }
+        }
+        for (int i = 0; i < monthWith30Days.length; i++) {
+            if (findNumberOfDays) {
+                break;
+            }
+            if (month.equals(monthWith30Days[i])) {
+                numberOfDays = 30;
+                findNumberOfDays = true;
+                break;
+            }
+        }
+        if (findNumberOfDays == false) {
+            numberOfDays = 28;
+        }
+        return numberOfDays;
     }
 }
